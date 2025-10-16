@@ -4,10 +4,65 @@
  */
 package electricity.billing.system;
 
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import java.awt.Image;
+
 /**
  *
  * @author danny
  */
-public class Splash {
+public class Splash extends JFrame implements Runnable{
     
+    Thread t1;
+    Splash(){
+        
+        ImageIcon i1 = new ImageIcon(ClassLoader.getSystemResource("icon/WelcomeImage.jpg"));
+        
+        //To resize as per the new size, we use the getScaledInstance method
+        Image i2 = i1.getImage().getScaledInstance(730, 550, Image.SCALE_DEFAULT);
+        ImageIcon i3 = new ImageIcon(i2);
+        
+        JLabel image = new JLabel(i3);
+        add(image);
+        
+        setVisible(true); //By default the visibility of JFrame is hidden
+        
+        //Adding a transition for the image to grow incrementally
+        int x = 1;
+        for(int i = 2; i < 600; i++){
+            setSize(i + x,i); //Set this as per your image size
+            setLocation(700 - ((i + x)/2), 400 - (i/2) ); //To change the (X => Right, Y => from TOP)
+//          setVisible(true); //By default the visibility of JFrame is hidden   
+            try{
+                Thread.sleep(3);
+                
+                
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+        
+        t1 = new Thread(this);
+        t1.start(); //this method internally calls run methods of runnable (run)
+    }
+    
+    @Override
+    public void run(){
+        try{
+            //Step 1: Close the current frame of Electricity India
+            Thread.sleep(5000);
+            setVisible(false);
+            
+            //Step 2: Open the Login frame of the user
+            new Login();
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+    
+    public static void main(String[] args){
+        new Splash();
+    }
 }
