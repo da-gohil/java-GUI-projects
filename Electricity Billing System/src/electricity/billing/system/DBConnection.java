@@ -8,6 +8,7 @@ import java.sql.*;
 import javax.swing.JOptionPane;
 
 /**
+ * Handles all database connections and statement creation for the application.
  *
  * @author danny
  */
@@ -16,7 +17,9 @@ public class DBConnection {
     Connection conn; 
     Statement stmt;
     
-    // Removed 'throws SQLException' because we are catching the exception internally
+    /**
+     * Constructor to establish a connection to the MySQL database.
+     */
     DBConnection() { 
         try {
             // 1. Load the JDBC Driver (Recommended best practice) but this is Optional
