@@ -172,11 +172,11 @@ public class NewCustomer extends JFrame implements ActionListener {
                 setVisible(false);
                 
                 // Navigate to the next frame (uncomment if MeterInfo class is available)
-                // new MeterInfo(meter);
+                new MeterInfo(meter);
                 
             } catch (Exception e) {
                 e.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Database Error: Failed to add data. Check logs for details. (Possible error: Meter/Name too long for Login table VARCHAR(10))");
+                JOptionPane.showMessageDialog(null, "Database Error: Failed to add data. Check logs for details");
             }
         } else {
             // Cancel button action
