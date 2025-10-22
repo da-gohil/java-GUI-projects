@@ -15,16 +15,21 @@ import java.awt.Image;
  */
 public class Splash extends JFrame implements Runnable{
     
-    Thread t1;
+    // Changed t1 to a more descriptive variable name
+    Thread thread;
+    
     Splash(){
         
-        ImageIcon i1 = new ImageIcon(ClassLoader.getSystemResource("icon/WelcomeImage.jpg"));
+        // Changed i1 to imageIcon for clarity
+        ImageIcon imageIcon = new ImageIcon(ClassLoader.getSystemResource("icon/WelcomeImage.jpg"));
         
         //To resize as per the new size, we use the getScaledInstance method
-        Image i2 = i1.getImage().getScaledInstance(730, 550, Image.SCALE_DEFAULT);
-        ImageIcon i3 = new ImageIcon(i2);
+        // Changed i2 to scaledImage for clarity
+        Image scaledImage = imageIcon.getImage().getScaledInstance(730, 550, Image.SCALE_DEFAULT);
+        // Changed i3 to finalIcon for clarity
+        ImageIcon finalIcon = new ImageIcon(scaledImage);
         
-        JLabel image = new JLabel(i3);
+        JLabel image = new JLabel(finalIcon);
         add(image);
         
         setVisible(true); //By default the visibility of JFrame is hidden
@@ -34,7 +39,7 @@ public class Splash extends JFrame implements Runnable{
         for(int i = 2; i < 600; i++){
             setSize(i + x,i); //Set this as per your image size
             setLocation(700 - ((i + x)/2), 400 - (i/2) ); //To change the (X => Right, Y => from TOP)
-//          setVisible(true); //By default the visibility of JFrame is hidden   
+//            setVisible(true); //By default the visibility of JFrame is hidden     
             try{
                 Thread.sleep(3);
                 
@@ -44,15 +49,16 @@ public class Splash extends JFrame implements Runnable{
             }
         }
         
-        t1 = new Thread(this);
-        t1.start(); //this method internally calls run methods of runnable (run)
+        // Initializing the thread with the descriptive name
+        thread = new Thread(this);
+        thread.start(); //this method internally calls run methods of runnable (run)
     }
     
     @Override
     public void run(){
         try{
             //Step 1: Close the current frame of Electricity India
-            Thread.sleep(5000);
+            Thread.sleep(1000);
             setVisible(false);
             
             //Step 2: Open the Login frame of the user
