@@ -3,126 +3,175 @@ package electricity.billing.system;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.sql.*; // Added necessary SQL imports
 
-// NOTE: This class assumes the MeterInfo is opened after NewCustomer, 
-// and receives the meter number as a parameter.
+/**
+ * The MeterInfo class handles the configuration details for a new meter,
+ * storing location, type, phase code, and billing type in the database.
+ */
 public class MeterInfo extends JFrame implements ActionListener {
 
-    String meterNumber; // Field to hold the meter number passed from NewCustomer
-    JComboBox<String> meterLocation, meterType, phaseCode, billType, days;
-    JButton submitButton, cancelButton;
+    // --- Aesthetic Constants ---
+    private static final Color PRIMARY_ACCENT_BLUE = new Color(0, 122, 255);
+    private static final Color BACKGROUND_COLOR = Color.WHITE;
+    private static final Font STANDARD_FONT = new Font("Tahoma", Font.PLAIN, 14); 
+    private static final Font HEADING_FONT = new Font("Tahoma", Font.PLAIN, 24);
+
+    // --- Component Declarations ---
+    private String meterNumber; // Field to hold the meter number passed from NewCustomer
+    private JComboBox<String> meterLocation, meterType, phaseCode, billType;
+    private JLabel daysValue; // Changed from JComboBox to JLabel as it is a fixed value
+    private JButton submitButton, cancelButton;
 
     // Constructor that accepts the meter number
     MeterInfo(String meterNumber) {
         this.meterNumber = meterNumber; // Store the meter number
         
+        // --- Frame Setup ---
         setSize(700, 500);
         setLocation(400, 200);
-        setTitle("Meter Information");
-
-        // --- Panel Setup ---
+        setTitle("Meter Information Setup");
+        
+        // --- Panel Setup (Use BoxLayout for better structure management) ---
         JPanel p = new JPanel();
         p.setLayout(null);
-        p.setBackground(new Color(173, 216, 230));
+        p.setBackground(BACKGROUND_COLOR);
         add(p);
-
+        
         // --- Heading ---
         JLabel heading = new JLabel("Meter Information");
-        heading.setBounds(180, 10, 250, 25);
-        heading.setFont(new Font("Tahoma", Font.PLAIN, 24));
+        heading.setBounds(200, 10, 300, 30);
+        heading.setFont(HEADING_FONT);
+        heading.setForeground(PRIMARY_ACCENT_BLUE);
         p.add(heading);
         
+        int y_pos = 80;
+        int label_width = 150;
+        int comp_width = 250;
+        int comp_height = 25;
+        int spacing = 40;
+
         // --- 1. Meter Number (Non-editable) ---
-        JLabel lblMeterNo = new JLabel("Meter Number");
-        lblMeterNo.setBounds(100, 80, 150, 20);
+        JLabel lblMeterNo = new JLabel("Meter Number:");
+        lblMeterNo.setBounds(100, y_pos, label_width, comp_height);
+        lblMeterNo.setFont(STANDARD_FONT);
         p.add(lblMeterNo);
         
-        JLabel meterNumberValue = new JLabel(meterNumber); // Display the parsed  meter number
-        meterNumberValue.setBounds(280, 80, 200, 20);
-        p.add(meterNumberValue);
+        JLabel meterNumberLabel = new JLabel(this.meterNumber); // Display the parsed meter number
+        meterNumberLabel.setBounds(280, y_pos, comp_width, comp_height);
+        meterNumberLabel.setFont(STANDARD_FONT);
+        p.add(meterNumberLabel);
+        y_pos += spacing;
 
         // --- 2. Meter Location (Dropdown) ---
-        JLabel lblLocation = new JLabel("Meter Location");
-        lblLocation.setBounds(100, 120, 150, 20);
+        JLabel lblLocation = new JLabel("Meter Location:");
+        lblLocation.setBounds(100, y_pos, label_width, comp_height);
+        lblLocation.setFont(STANDARD_FONT);
         p.add(lblLocation);
 
-        String[] locationOptions = {"Outside", "Inside"};
+        String[] locationOptions = {"Outside", "Inside", "Basement", "Attic"};
         meterLocation = new JComboBox<>(locationOptions);
-        meterLocation.setBounds(280, 120, 200, 20);
-        meterLocation.setBackground(Color.WHITE);
+        meterLocation.setBounds(280, y_pos, comp_width, comp_height);
+        meterLocation.setBackground(Color.LIGHT_GRAY);
+        meterLocation.setFont(STANDARD_FONT);
         p.add(meterLocation);
+        y_pos += spacing;
 
         // --- 3. Meter Type (Dropdown) ---
-        JLabel lblType = new JLabel("Meter Type");
-        lblType.setBounds(100, 160, 150, 20);
+        JLabel lblType = new JLabel("Meter Type:");
+        lblType.setBounds(100, y_pos, label_width, comp_height);
+        lblType.setFont(STANDARD_FONT);
         p.add(lblType);
 
-        String[] typeOptions = {"Electric Meter", "Solar Meter", "Smart Meter"};
+        String[] typeOptions = {"Electronic Meter", "Digital Meter", "Smart Meter"};
         meterType = new JComboBox<>(typeOptions);
-        meterType.setBounds(280, 160, 200, 20);
-        meterType.setBackground(Color.WHITE);
+        meterType.setBounds(280, y_pos, comp_width, comp_height);
+        meterType.setBackground(Color.LIGHT_GRAY);
+        meterType.setFont(STANDARD_FONT);
         p.add(meterType);
+        y_pos += spacing;
 
         // --- 4. Phase Code (Dropdown) ---
-        JLabel lblPhase = new JLabel("Phase Code");
-        lblPhase.setBounds(100, 200, 150, 20);
+        JLabel lblPhase = new JLabel("Phase Code:");
+        lblPhase.setBounds(100, y_pos, label_width, comp_height);
+        lblPhase.setFont(STANDARD_FONT);
         p.add(lblPhase);
 
-        String[] phaseOptions = {"011", "022", "033", "044", "055", "066", "077", "088", "099"};
+        String[] phaseOptions = {"01 (Single Phase)", "02 (Two Phase)", "03 (Three Phase)"};
         phaseCode = new JComboBox<>(phaseOptions);
-        phaseCode.setBounds(280, 200, 200, 20);
-        phaseCode.setBackground(Color.WHITE);
+        phaseCode.setBounds(280, y_pos, comp_width, comp_height);
+        phaseCode.setBackground(Color.LIGHT_GRAY);
+        phaseCode.setFont(STANDARD_FONT);
         p.add(phaseCode);
+        y_pos += spacing;
 
         // --- 5. Bill Type (Dropdown) ---
-        JLabel lblBillType = new JLabel("Bill Type");
-        lblBillType.setBounds(100, 240, 150, 20);
+        JLabel lblBillType = new JLabel("Bill Type:");
+        lblBillType.setBounds(100, y_pos, label_width, comp_height);
+        lblBillType.setFont(STANDARD_FONT);
         p.add(lblBillType);
 
-        String[] billOptions = {"Normal", "Commercial", "Industrial"};
+        String[] billOptions = {"Residential", "Commercial", "Industrial"};
         billType = new JComboBox<>(billOptions);
-        billType.setBounds(280, 240, 200, 20);
-        billType.setBackground(Color.WHITE);
+        billType.setBounds(280, y_pos, comp_width, comp_height);
+        billType.setBackground(Color.LIGHT_GRAY);
+        billType.setFont(STANDARD_FONT);
         p.add(billType);
+        y_pos += spacing;
 
-        // --- 6. Days (Dropdown/Fixed) ---
-        JLabel lblDays = new JLabel("Days");
-        lblDays.setBounds(100, 280, 150, 20);
+        // --- 6. Days (Fixed Value) ---
+        JLabel lblDays = new JLabel("Days:");
+        lblDays.setBounds(100, y_pos, label_width, comp_height);
+        lblDays.setFont(STANDARD_FONT);
         p.add(lblDays);
 
-        String[] dayOptions = {"30 Days"};
-        days = new JComboBox<>(dayOptions); // Use JComboBox for consistency with the image
-        days.setBounds(280, 280, 200, 20);
-        days.setBackground(Color.WHITE);
-        p.add(days);
-         
+        // This should be a non-editable JLabel, as the time period is fixed.
+        daysValue = new JLabel("30 Days"); 
+        daysValue.setBounds(280, y_pos, comp_width, comp_height);
+        daysValue.setFont(new Font("Tahoma", Font.BOLD, 14));
+        p.add(daysValue);
+        y_pos += spacing;
+        
         // --- 7. Note ---
-        JLabel lblNote = new JLabel("Note");
-        lblNote.setBounds(100, 320, 150, 20);
+        JLabel lblNote = new JLabel("Note:");
+        lblNote.setBounds(100, y_pos, label_width, comp_height);
+        lblNote.setFont(STANDARD_FONT);
         p.add(lblNote);
 
         JLabel noteValue = new JLabel("By Default Bill is calculated for 30 days only");
-        noteValue.setBounds(280, 320, 300, 20);
+        noteValue.setBounds(280, y_pos, comp_width + 50, comp_height);
+        noteValue.setForeground(Color.RED);
         p.add(noteValue);
+        y_pos += spacing + 20;
 
-        // --- Submit Button ---
+        // --- Submit Button (Primary Action Style) ---
         submitButton = new JButton("Submit");
-        submitButton.setBounds(150, 390, 100, 25);
-        submitButton.setBackground(Color.WHITE);
-        submitButton.setForeground(Color.BLACK);
+        submitButton.setBounds(150, y_pos, 150, comp_height + 5);
+        submitButton.setBackground(PRIMARY_ACCENT_BLUE);
+        submitButton.setForeground(Color.WHITE);
+        submitButton.setFont(STANDARD_FONT);
         submitButton.addActionListener(this);
         p.add(submitButton);
 
-        // --- Cancel Button ---
+        // --- Cancel Button (Secondary Action Style) ---
         cancelButton = new JButton("Cancel");
-        cancelButton.setBounds(300, 390, 100, 25);
-        cancelButton.setBackground(Color.BLACK);
+        cancelButton.setBounds(330, y_pos, 150, comp_height + 5);
+        cancelButton.setBackground(Color.DARK_GRAY);
         cancelButton.setForeground(Color.WHITE);
+        cancelButton.setFont(STANDARD_FONT);
         cancelButton.addActionListener(this);
         p.add(cancelButton);
+        
+        // --- Optional Image Placeholder (to match the application style) ---
+        ImageIcon i1 = new ImageIcon(ClassLoader.getSystemResource("icon/meter.png"));
+        Image i2 = i1.getImage().getScaledInstance(200, 350, Image.SCALE_DEFAULT);
+        JLabel image = new JLabel(new ImageIcon(i2));
+        image.setBounds(500, 60, 200, 350);
+        // p.add(image);
 
-        // --- Image (Optional, to match the visual style of your previous frame) ---
-        // For this frame, I'll skip the image to keep the panel centered as shown in the image.
+        // Add padding to the panel by placing it in a separate frame area
+        setLayout(new BorderLayout());
+        add(p, "Center");
         
         setVisible(true);
     }
@@ -134,35 +183,66 @@ public class MeterInfo extends JFrame implements ActionListener {
         if (ae.getSource() == submitButton) {
             
             // 1. Retrieve data
-            String meter = meterNumber;
+            String meter = this.meterNumber;
+            // Retrieve only the first part of the phase code (e.g., "01" from "01 (Single Phase)")
+            String phase = ((String) phaseCode.getSelectedItem()).split(" ")[0]; 
+            
+            // Cast and retrieve other values
             String location = (String) meterLocation.getSelectedItem();
             String type = (String) meterType.getSelectedItem();
-            String phase = (String) phaseCode.getSelectedItem();
             String typebill = (String) billType.getSelectedItem();
-            String totalDays = (String) days.getSelectedItem(); // Should be "30 Days"
-             
-            // 2. Construct SQL Query (using plain Statement for consistency with previous code)
-            // Assuming a table named 'meter_info' exists with columns:
-            // meter_no, meter_location, meter_type, phase_code, bill_type, days
-            String query = "INSERT INTO meter_info VALUES('" + meterNumber + "', '" + location + "', '" + type + "', '" + phase + "', '" + typebill + "', '" + totalDays + "')";
+            String totalDays = daysValue.getText(); 
             
+            // 2. Construct Secure SQL Query using PreparedStatement
+            // Columns: meter_no, meter_location, meter_type, phase_code, bill_type, days
+            String query = "INSERT INTO meter_info (meter_no, meter_location, meter_type, phase_code, bill_type, days) VALUES(?, ?, ?, ?, ?, ?)";
+            
+            Connection dbConn = null;
+
             try {
-                // Initialize Connection (Assuming DBConnection class exists)
-                // Use the same connection class as your NewCustomer frame.
-                DBConnection c = new DBConnection(); 
+                // Initialize Connection (Assumes DBConnection class exists and provides Connection object)
+                DBConnection c = new DBConnection();
+                dbConn = c.getConnection(); // Assuming DBConnection has a getter for Connection
+
+                // Check for null connection
+                if (dbConn == null) {
+                    JOptionPane.showMessageDialog(this, "Database connection failed.", "Database Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // Use PreparedStatement for security
+                try (PreparedStatement pst = dbConn.prepareStatement(query)) {
+                    pst.setString(1, meter);
+                    pst.setString(2, location);
+                    pst.setString(3, type);
+                    pst.setString(4, phase);
+                    pst.setString(5, typebill);
+                    pst.setString(6, totalDays); 
+                    
+                    // Execute the insertion
+                    pst.executeUpdate();
+                }
                 
-                // Execute the query
-                c.stmt.executeUpdate(query);
-                
-                JOptionPane.showMessageDialog(null, "Meter Information Submitted Successfully");
+                JOptionPane.showMessageDialog(this, "Meter Information Submitted Successfully!");
                 setVisible(false);
                 
-                // Navigate to the main application dashboard or next logical screen
-                // new Project().setVisible(true);
-                
-            } catch (Exception e) {
+            } catch (SQLException e) {
+                // Handle SQL errors (e.g., integrity constraint violation if meter_no already exists)
+                JOptionPane.showMessageDialog(this, "Database Error: Failed to submit meter info. " + e.getMessage(), "SQL Error", JOptionPane.ERROR_MESSAGE);
                 e.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Database Error: Failed to submit meter info. " + e.getMessage());
+            } catch (Exception e) {
+                // Handle other unexpected errors
+                JOptionPane.showMessageDialog(this, "An unexpected error occurred: " + e.getMessage(), "System Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            } finally {
+                // Close the connection securely
+                try {
+                    if (dbConn != null) {
+                        dbConn.close();
+                    }
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
             }
 
         } else if (ae.getSource() == cancelButton) {
@@ -172,6 +252,7 @@ public class MeterInfo extends JFrame implements ActionListener {
     
     // Optional main method for standalone testing
     public static void main(String[] args) {
-        new MeterInfo(""); 
+        // Test with a dummy meter number
+        new MeterInfo("123456"); 
     }
 }
