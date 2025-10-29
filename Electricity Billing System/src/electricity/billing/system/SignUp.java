@@ -1,83 +1,51 @@
 package electricity.billing.system;
 
-import java.awt.Choice;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Image;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
+import java.awt.event.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.border.LineBorder;
-import javax.swing.border.TitledBorder;
-import javax.swing.JPanel;
-import javax.swing.JPasswordField;
-import javax.swing.JTextField;
+import java.sql.ResultSet;
+import javax.swing.*;
+import javax.swing.border.*;
 
 /**
- * The SignUp class provides the graphical user interface for new user registration.
- * This version uses standard system fonts and secure database interaction
- * via PreparedStatement using the updated DBConnection.getConnection() method.
- *
- * @author danny
+ * SignUp class handles the user registration flow.
+ * Admin accounts auto-generate a unique meter_no.
+ * Customer accounts must provide an existing meter_no.
  */
 public class SignUp extends JFrame implements ActionListener {
-    
-    // --- Aesthetic Constants ---
-    private static final Color PRIMARY_ACCENT_BLUE = new Color(0, 122, 255);
-    private static final int BUTTON_HEIGHT = 28;
 
-    // Simplified Font Definitions using reliable system font (Tahoma)
+    // UI components
+    private JTextField txtMeter, txtUsername, txtName;
+    private JPasswordField txtPassword;
+    private Choice accountType;
+    private JButton createButton, backButton;
+    private JLabel lblMeter;
+
+    // UI constants
+    private static final Color PRIMARY_BLUE = new Color(0, 122, 255);
     private static final Font TITLE_FONT = new Font("Tahoma", Font.BOLD, 16);
     private static final Font LABEL_FONT = new Font("Tahoma", Font.BOLD, 14);
     private static final Font FIELD_FONT = new Font("Tahoma", Font.PLAIN, 14);
     private static final Font BUTTON_FONT = new Font("Tahoma", Font.BOLD, 14);
-    
-    // Declare components globally for action listeners
-    JTextField txtMeterField, txtUsername, txtName;
-    JPasswordField txtPwd;
-    Choice accountType;
-    JButton createButton, backButton;
 
-    public SignUp(){
-        
+    public SignUp() {
         super("Create Account");
-        
-        // Frame size and position
         setBounds(400, 150, 700, 400);
         getContentPane().setBackground(Color.WHITE);
         setLayout(null);
-        
+
         JPanel panel = new JPanel();
         panel.setBounds(30, 30, 650, 300);
-        
-        // Using a light blue border color consistent with accent
-        Color borderColor = new Color(173, 216, 236);
-        
-        panel.setBorder(new TitledBorder(new LineBorder(borderColor, 2), 
-                "Create Account", TitledBorder.LEADING, TitledBorder.TOP, 
-                TITLE_FONT, PRIMARY_ACCENT_BLUE));
-        
+        panel.setBorder(new TitledBorder(new LineBorder(new Color(173, 216, 236), 2),
+                "Create Account", TitledBorder.LEADING, TitledBorder.TOP, TITLE_FONT, PRIMARY_BLUE));
         panel.setBackground(Color.WHITE);
         panel.setLayout(null);
-        panel.setForeground(PRIMARY_ACCENT_BLUE);
         add(panel);
-        
-        
-        // --- Component Placement (Layout code) ---
-        
-        int labelX = 100;
-        int fieldX = 260;
-        int elementHeight = 20;
-        int ySpacing = 40; 
-        int currentY = 50; 
-        
-        // Row 1: Account Type
+
+        int labelX = 100, fieldX = 260, elementHeight = 20, ySpacing = 40, currentY = 50;
+
+        // Account Type
         JLabel heading = new JLabel("Create Account As");
         heading.setBounds(labelX, currentY, 140, elementHeight);
         heading.setForeground(Color.DARK_GRAY);
@@ -90,179 +58,179 @@ public class SignUp extends JFrame implements ActionListener {
         accountType.setBounds(fieldX, currentY, 150, elementHeight);
         accountType.setFont(FIELD_FONT);
         panel.add(accountType);
-        
+
         currentY += ySpacing;
-        
-        // Row 2: Meter Number
-        JLabel lblMeter = new JLabel("Meter Number ");
+
+        // Meter Number (only for Customer)
+        lblMeter = new JLabel("Meter Number");
         lblMeter.setBounds(labelX, currentY, 140, elementHeight);
         lblMeter.setForeground(Color.DARK_GRAY);
         lblMeter.setFont(LABEL_FONT);
+        lblMeter.setVisible(false);
         panel.add(lblMeter);
-        txtMeterField = new JTextField();
-        txtMeterField.setBounds(fieldX, currentY, 150, elementHeight);
-        txtMeterField.setFont(FIELD_FONT);
-        panel.add(txtMeterField);
+
+        txtMeter = new JTextField();
+        txtMeter.setBounds(fieldX, currentY, 150, elementHeight);
+        txtMeter.setFont(FIELD_FONT);
+        txtMeter.setVisible(false);
+        panel.add(txtMeter);
+
         currentY += ySpacing;
-        
-        // Row 3: Username details
-        JLabel lblUsername = new JLabel("Enter Username ");
+
+        // Username
+        JLabel lblUsername = new JLabel("Username");
         lblUsername.setBounds(labelX, currentY, 140, elementHeight);
         lblUsername.setForeground(Color.DARK_GRAY);
         lblUsername.setFont(LABEL_FONT);
         panel.add(lblUsername);
+
         txtUsername = new JTextField();
         txtUsername.setBounds(fieldX, currentY, 150, elementHeight);
         txtUsername.setFont(FIELD_FONT);
         panel.add(txtUsername);
+
         currentY += ySpacing;
-        
-        // Row 4: Name details
-        JLabel lblName = new JLabel("Enter Name ");
+
+        // Name
+        JLabel lblName = new JLabel("Name");
         lblName.setBounds(labelX, currentY, 140, elementHeight);
         lblName.setForeground(Color.DARK_GRAY);
         lblName.setFont(LABEL_FONT);
         panel.add(lblName);
-        txtName = new JTextField(); 
+
+        txtName = new JTextField();
         txtName.setBounds(fieldX, currentY, 150, elementHeight);
         txtName.setFont(FIELD_FONT);
         panel.add(txtName);
-        currentY += ySpacing;
-        
-        // Row 5: Password details
-        JLabel lblPwd = new JLabel("Enter Password "); 
-        lblPwd.setBounds(labelX, currentY, 140, elementHeight);
-        lblPwd.setForeground(Color.DARK_GRAY);
-        lblPwd.setFont(LABEL_FONT);
-        panel.add(lblPwd);
-        txtPwd = new JPasswordField(); 
-        txtPwd.setBounds(fieldX, currentY, 150, elementHeight);
-        txtPwd.setFont(FIELD_FONT);
-        panel.add(txtPwd);
 
+        currentY += ySpacing;
+
+        // Password
+        JLabel lblPassword = new JLabel("Password");
+        lblPassword.setBounds(labelX, currentY, 140, elementHeight);
+        lblPassword.setForeground(Color.DARK_GRAY);
+        lblPassword.setFont(LABEL_FONT);
+        panel.add(lblPassword);
+
+        txtPassword = new JPasswordField();
+        txtPassword.setBounds(fieldX, currentY, 150, elementHeight);
+        txtPassword.setFont(FIELD_FONT);
+        panel.add(txtPassword);
 
         // Buttons
-        currentY += ySpacing + 10; // Extra spacing before buttons
-        
-        
-        // CREATE Button (Primary Action Style)
+        currentY += ySpacing + 10;
+
         createButton = new JButton("CREATE");
-        createButton.setBackground(PRIMARY_ACCENT_BLUE); 
+        createButton.setBackground(PRIMARY_BLUE);
         createButton.setForeground(Color.WHITE);
-        createButton.setFont(BUTTON_FONT); 
-        createButton.setBounds(140, currentY, 120, BUTTON_HEIGHT);
+        createButton.setFont(BUTTON_FONT);
+        createButton.setBounds(140, currentY, 120, 28);
         createButton.addActionListener(this);
         panel.add(createButton);
-        
-        // Back Button (Secondary Action Style)
+
         backButton = new JButton("BACK");
         backButton.setBackground(Color.WHITE);
-        backButton.setForeground(PRIMARY_ACCENT_BLUE); 
+        backButton.setForeground(PRIMARY_BLUE);
         backButton.setFont(BUTTON_FONT);
-        backButton.setBounds(280, currentY, 120, BUTTON_HEIGHT);
+        backButton.setBounds(280, currentY, 120, 28);
         backButton.addActionListener(this);
         panel.add(backButton);
-        
-        // Image on the right side of the panel
+
+        // Account type logic
+        accountType.addItemListener(ae -> {
+            if (accountType.getSelectedItem().equals("Customer")) {
+                lblMeter.setVisible(true);
+                txtMeter.setVisible(true);
+            } else {
+                lblMeter.setVisible(false);
+                txtMeter.setVisible(false);
+            }
+        });
+
+        // Signup image
         try {
-            ImageIcon i1 = new ImageIcon(ClassLoader.getSystemResource("icon/signUpImage.png"));
+            ImageIcon i1 = new ImageIcon(ClassLoader.getSystemResource("icon/signupImage.png"));
             Image i2 = i1.getImage().getScaledInstance(250, 250, Image.SCALE_DEFAULT);
-            ImageIcon i3 = new ImageIcon(i2);
-            JLabel image = new JLabel(i3);
-            
+            JLabel image = new JLabel(new ImageIcon(i2));
             image.setBounds(410, 30, 250, 250);
             panel.add(image);
         } catch (Exception e) {
             System.err.println("Signup image not found: " + e.getMessage());
         }
-        
+
         setVisible(true);
     }
-    
+
     @Override
-    public void actionPerformed(ActionEvent ae){
-        if(ae.getSource() == createButton){
+    public void actionPerformed(ActionEvent ae) {
+        if (ae.getSource() == createButton) {
             handleSignUp();
-        } else if(ae.getSource() == backButton){
-            setVisible(false);
-            dispose();
-            new Login(); 
-        }
-    }
-
-    /**
-     * Handles the secure account creation process using PreparedStatement.
-     */
-    private void handleSignUp() {
-        // 1. Gather all data from fields
-        String accType = accountType.getSelectedItem();
-        String username = txtUsername.getText();
-        String meterField = txtMeterField.getText();
-        String name = txtName.getText(); 
-        String passwd = new String(txtPwd.getPassword());
-
-        // 2. Input Validation (Basic check before hitting DB)
-        if (meterField.isEmpty() || username.isEmpty() || name.isEmpty() || passwd.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "All fields are required for signup.", "Input Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        
-        Connection dbConn = null;
-        PreparedStatement pst = null;
-
-        try {
-            // 3. Establish DB connection - UPDATED TO USE getConnection()
-            DBConnection conn = new DBConnection();
-            dbConn = conn.getConnection(); 
-            
-            // Handle null connection (DB failure)
-            if (dbConn == null) {
-                 return; // Error message already shown in DBConnection constructor
-            }
-            
-            // 4. Construct the SQL query using placeholders (?)
-            String query = "INSERT INTO login (meter_no, username, password, userType, name) VALUES (?, ?, ?, ?, ?)";
-            
-            // 5. Use PreparedStatement for security (SQL Injection prevention)
-            pst = dbConn.prepareStatement(query);
-            pst.setString(1, meterField);
-            pst.setString(2, username);
-            pst.setString(3, passwd);
-            pst.setString(4, accType);
-            pst.setString(5, name);
-
-            // 6. Execute the query
-            pst.executeUpdate();
-            
-            // 7. Success Message and redirection
-            JOptionPane.showMessageDialog(this, "Account Created Successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-            
-            // Close the current frame and open the Login page
+        } else if (ae.getSource() == backButton) {
             setVisible(false);
             dispose();
             new Login();
-            
-        } catch(Exception e){
-            e.printStackTrace();
-            
-            if (e.getMessage() != null && e.getMessage().contains("Duplicate entry")) {
-                JOptionPane.showMessageDialog(this, "Error: Meter Number or Username already exists. Please choose a different one.", "Database Error", JOptionPane.ERROR_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(this, "An unexpected error occurred during account creation. See console for details.", "Database Error", JOptionPane.ERROR_MESSAGE);
-            }
-        } finally {
-            // 8. Manual resource cleanup (closing PreparedStatement and Connection)
-            try {
-                if (pst != null) pst.close();
-                if (dbConn != null) dbConn.close();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
         }
     }
 
-    
-    public static void main(String[] args){
+    private void handleSignUp() {
+        String type = accountType.getSelectedItem();
+        String username = txtUsername.getText().trim();
+        String name = txtName.getText().trim();
+        String password = new String(txtPassword.getPassword()).trim();
+        String meter = txtMeter.getText().trim();
+
+        // Validation
+        if (username.isEmpty() || name.isEmpty() || password.isEmpty() ||
+                (type.equals("Customer") && meter.isEmpty())) {
+            JOptionPane.showMessageDialog(this, "Please fill all required fields.", "Input Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try (Connection conn = new DBConnection().getConnection()) {
+            PreparedStatement pst;
+
+            if (type.equals("Admin")) {
+                // Auto-generate meter for Admin
+                meter = "ADMIN_" + System.currentTimeMillis();
+                pst = conn.prepareStatement("INSERT INTO login (meter_no, username, password, userType, name) VALUES (?, ?, ?, ?, ?)");
+                pst.setString(1, meter);
+                pst.setString(2, username);
+                pst.setString(3, password);
+                pst.setString(4, type);
+                pst.setString(5, name);
+            } else {
+                // Check if meter exists for Customer
+                pst = conn.prepareStatement("SELECT * FROM login WHERE meter_no = ?");
+                pst.setString(1, meter);
+                try (ResultSet rs = pst.executeQuery()) {
+                    if (!rs.next()) {
+                        JOptionPane.showMessageDialog(this, "Meter number does not exist!", "Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                }
+
+                // Update username, password, and name
+                pst = conn.prepareStatement("UPDATE login SET username = ?, password = ?, name = ?, userType = ? WHERE meter_no = ?");
+                pst.setString(1, username);
+                pst.setString(2, password);
+                pst.setString(3, name);
+                pst.setString(4, type);
+                pst.setString(5, meter);
+            }
+
+            pst.executeUpdate();
+            JOptionPane.showMessageDialog(this, "Account created successfully!");
+            setVisible(false);
+            dispose();
+            new Login();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error creating account. Check DB connection or duplicate values.", "Database Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public static void main(String[] args) {
         new SignUp();
     }
 }
