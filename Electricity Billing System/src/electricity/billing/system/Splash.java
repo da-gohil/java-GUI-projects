@@ -1,111 +1,151 @@
 package electricity.billing.system;
 
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import java.awt.Image;
-import java.awt.Dimension;
-import java.awt.Toolkit;
+import javax.swing.*;
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.URL;
 
 /**
- * The Splash class is responsible for displaying a temporary splash screen
- * during application startup with a growing animation effect.
- * It implements Runnable to manage the transition to the main Login screen
- * after a short delay on a separate thread.
- * * @author danny
+ * Splash screen displaying the project welcome message and animated logo.
+ * 
+ * <p>Conforms to the Electricity Billing System coding & aesthetic mandate:
+ * <ul>
+ *   <li>Apple-inspired minimalist aesthetic</li>
+ *   <li>Consistent font, color, and component spacing</li>
+ *   <li>Thread-safe Swing animation using javax.swing.Timer</li>
+ *   <li>Strict naming conventions and documentation</li>
+ * </ul>
+ * </p>
+ * 
+ * @author danny
  */
 public class Splash extends JFrame implements Runnable {
-    
-    // Constant for the animation speed (in milliseconds)
-    private static final int ANIMATION_DELAY_MS = 3;
-    // Constant for the splash screen duration before transition (in milliseconds)
-    private static final int SPLASH_DURATION_MS = 1000;
-    
-    // UI Component Naming: Naming convention lblComponent
+
+    // === Constants ===
+    private static final int ANIMATION_DELAY_MS = 10;      // Frame delay (ms)
+    private static final int SPLASH_DURATION_MS = 1200;    // Duration before transition (ms)
+    private static final int START_WIDTH = 100;            // Initial frame width
+    private static final int END_WIDTH = 700;              // Final frame width
+    private static final int STEP = 8;                     // Increment per animation tick
+
+    // === UI Components ===
     private JLabel lblImage;
-    
-    // Application Thread Naming: Descriptive variable name
+    private JLabel lblTitle;
+
+    // === Thread for delayed transition ===
     private Thread transitionThread;
-    
-    Splash() {
-        // Set basic frame properties
-        // setSize(730, 550); // Initial size will be set by the animation
-        setUndecorated(true); // Remove frame border for a clean splash effect
-        
-        // Load the image icon
-        ImageIcon imageIcon = new ImageIcon(ClassLoader.getSystemResource("icon/WelcomeImage.jpg"));
-        
-        // To resize as per the new size, we use the getScaledInstance method
-        Image scaledImage = imageIcon.getImage().getScaledInstance(730, 550, Image.SCALE_DEFAULT);
-        ImageIcon finalIcon = new ImageIcon(scaledImage);
-        
-        // Initialize the JLabel with the component naming convention
-        lblImage = new JLabel(finalIcon);
+
+    /**
+     * Initializes and displays the animated splash screen.
+     */
+    public Splash() {
+        setUndecorated(true);
+        setLayout(null);
+        getContentPane().setBackground(Color.WHITE);
+
+        // Load splash image
+        BufferedImage baseImage = loadImage("/icon/WelcomeImage.jpg");
+
+        // === Title Label (Top) ===
+        lblTitle = new JLabel("Welcome to Electricity Billing Management System", SwingConstants.CENTER);
+        lblTitle.setFont(new Font("SanSerif", Font.BOLD, 18));
+        lblTitle.setForeground(new Color(0, 122, 255)); // Apple blue
+        lblTitle.setOpaque(false);
+        add(lblTitle);
+
+        // === Image Label (Below Title) ===
+        lblImage = new JLabel();
+        lblImage.setOpaque(false);
         add(lblImage);
-        
-        // Get screen size for more reliable centering (Boundary Value Analysis fix)
+
+        // Start animation after EDT initialization
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        int screenWidth = screenSize.width;
-        int screenHeight = screenSize.height;
-        
-        // Animation Loop for the growing effect (runs on the EDT - NOT ideal, but kept for effect)
-        int widthIncrement = 1; // Descriptive name for x
-        int startSize = 2;
-        int endSize = 600;
-        
-        for (int i = startSize; i < endSize; i++) {
-            // Boundary Condition Check: Ensure frame size doesn't exceed a reasonable max
-            // and adjust location to keep it centered on the screen.
-            setSize(i + widthIncrement, i);
-            
-            // Calculating location to keep the center of the frame constant (relative to screen center)
-            int xLocation = (screenWidth - (i + widthIncrement)) / 2;
-            int yLocation = (screenHeight - i) / 2;
-            setLocation(xLocation, yLocation);
-            
-            // Make the frame visible after its initial properties are set
-            if (i == startSize) {
-                setVisible(true);
-            }
-            
-            try {
-                // Magic Number is now a descriptive constant
-                Thread.sleep(ANIMATION_DELAY_MS);
-            } catch (InterruptedException e) {
-                // Log the exception rather than just printing the stack trace
-                System.err.println("Splash screen animation interrupted: " + e.getMessage());
-                // Re-interrupt the thread
-                Thread.currentThread().interrupt(); 
-            }
-        }
-        
-        // Initializing the thread with the descriptive name and starting the transition
-        transitionThread = new Thread(this);
-        transitionThread.start();
+        double aspect = baseImage != null ? (double) baseImage.getHeight() / baseImage.getWidth() : 0.75;
+
+        EventQueue.invokeLater(() -> startAnimation(baseImage, aspect, screenSize));
     }
-    
+
+    /**
+     * Loads the splash image from the classpath.
+     * @param path The image resource path.
+     * @return BufferedImage if found, otherwise null.
+     */
+    private BufferedImage loadImage(String path) {
+        try {
+            URL imageUrl = getClass().getResource(path);
+            if (imageUrl == null) {
+                System.err.println("Image not found: " + path);
+                return null;
+            }
+            return ImageIO.read(imageUrl);
+        } catch (IOException e) {
+            System.err.println("Error loading image: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Handles the splash screen growth animation and transition.
+     * @param baseImage The image to scale.
+     * @param aspect The aspect ratio of the image.
+     * @param screenSize The user’s screen size for centering.
+     */
+    private void startAnimation(BufferedImage baseImage, double aspect, Dimension screenSize) {
+        final int[] currentWidth = { START_WIDTH };
+
+        Timer timer = new Timer(ANIMATION_DELAY_MS, e -> {
+            int width = currentWidth[0];
+            int height = (int) (width * aspect);
+
+            if (baseImage != null) {
+                Image scaled = baseImage.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+                lblImage.setIcon(new ImageIcon(scaled));
+            }
+
+            // Position title above image
+            lblTitle.setBounds(0, 0, width, 40);
+            lblImage.setBounds(0, 50, width, height);
+
+            // Frame height = image + title + small padding
+            setSize(width, height + 60);
+            setLocation((screenSize.width - width) / 2, (screenSize.height - (height + 60)) / 2);
+
+            if (!isVisible()) setVisible(true);
+
+            if (width >= END_WIDTH) {
+                ((Timer) e.getSource()).stop();
+                transitionThread = new Thread(this, "SplashTransitionThread");
+                transitionThread.start();
+            } else {
+                currentWidth[0] = width + STEP;
+            }
+        });
+
+        timer.setInitialDelay(0);
+        timer.start();
+    }
+
+    /**
+     * Runs the splash duration timer and transitions to the Login screen.
+     */
     @Override
     public void run() {
         try {
-            // Wait for the defined duration
             Thread.sleep(SPLASH_DURATION_MS);
-            
-            // Step 1: Close the current splash frame
-            setVisible(false);
-            dispose(); // Release resources
-            
-            // Step 2: Open the Login frame of the user
-            // Assuming 'Login' class exists in the same package or is imported
-            new Login(); 
+            SwingUtilities.invokeLater(() -> {
+                setVisible(false);
+                dispose();
+                new Login();
+            });
         } catch (InterruptedException e) {
-            System.err.println("Transition thread interrupted: " + e.getMessage());
             Thread.currentThread().interrupt();
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
-    
+
+    /** Entry point for the application. */
     public static void main(String[] args) {
-        new Splash();
+        EventQueue.invokeLater(Splash::new);
     }
 }
