@@ -1,82 +1,41 @@
 package electricity.billing.system;
 
-import java.awt.Color;
-import java.awt.Choice;
-import java.awt.Image;
-import java.awt.Font;
-import java.awt.event.ActionEvent;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JTextField;
-import javax.swing.JPasswordField;
-import javax.swing.JOptionPane;
-import java.awt.event.ActionListener;
-import java.sql.ResultSet;
-import java.sql.PreparedStatement;
-import java.sql.Connection;
-import java.util.Arrays; // Needed for clearing password array
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.sql.*;
+import java.util.Arrays;
 
 /**
- * The Login class provides the graphical user interface for user authentication.
- * It enforces strict UI/UX standards and utilizes secure
- * database interaction practices (PreparedStatement) to prevent SQL Injection.
- *
- * @author danny
+ * Login screen for the Electricity Billing System. Provides secure
+ * authentication and redirects to MainHomePage.
  */
 public class Login extends JFrame implements ActionListener {
 
-    // --- UI Component Declarations (Strict Naming Convention) ---
     private JTextField txtUsername;
     private JPasswordField txtPassword;
     private Choice choiceUserType;
     private JButton btnLogin, btnCancel, btnSignup;
 
-    // --- Aesthetic Constants ---
     private static final Color PRIMARY_ACCENT_BLUE = new Color(0, 122, 255);
-    // Changed Font to Tahoma for consistency with SignUp.java
     private static final Font STANDARD_FONT = new Font("Tahoma", Font.PLAIN, 14);
     private static final int COMPONENT_HEIGHT = 25;
     private static final int BUTTON_HEIGHT = 35;
-    private static final int PADDING_VERTICAL = 15;
+    private static final int PADDING_VERTICAL = 20; // Slightly increased for readability
 
-    Login() {
-        super("Login Page");
-        // Apply mandated background and layout
+    public Login() {
+        super("Welcome to Electricity Billing Management: Login Page");
         getContentPane().setBackground(Color.WHITE);
         setLayout(null);
 
-        // --- 1. Username Label and Text Field ---
-        JLabel lblUsername = new JLabel("Username");
-        lblUsername.setBounds(300, PADDING_VERTICAL, 100, 20);
-        lblUsername.setFont(STANDARD_FONT);
-        add(lblUsername);
+        // --- Labels and Inputs ---
+        addLabel("Username", 300, PADDING_VERTICAL, 100, 20);
+        txtUsername = addTextField(400, PADDING_VERTICAL, 180, COMPONENT_HEIGHT);
 
-        txtUsername = new JTextField();
-        txtUsername.setBounds(400, PADDING_VERTICAL, 180, COMPONENT_HEIGHT);
-        txtUsername.setFont(STANDARD_FONT);
-        add(txtUsername);
+        addLabel("Password", 300, PADDING_VERTICAL + COMPONENT_HEIGHT + 10, 100, 20);
+        txtPassword = addPasswordField(400, PADDING_VERTICAL + COMPONENT_HEIGHT + 10, 180, COMPONENT_HEIGHT);
 
-        // --- 2. Password Label and Password Field ---
-        JLabel lblPassword = new JLabel("Password");
-        // Vertical spacing adjustment for clean layout
-        lblPassword.setBounds(300, PADDING_VERTICAL + COMPONENT_HEIGHT + 10, 100, 20);
-        lblPassword.setFont(STANDARD_FONT);
-        add(lblPassword);
-
-        txtPassword = new JPasswordField();
-        txtPassword.setBounds(400, PADDING_VERTICAL + COMPONENT_HEIGHT + 10, 180, COMPONENT_HEIGHT);
-        txtPassword.setFont(STANDARD_FONT);
-        add(txtPassword);
-
-        // --- 3. User Type Label and Choice (Dropdown) ---
-        JLabel lblUserType = new JLabel("Login As");
-        // Vertical spacing adjustment for clean layout
-        lblUserType.setBounds(300, PADDING_VERTICAL + (COMPONENT_HEIGHT * 2) + 20, 100, 20);
-        lblUserType.setFont(STANDARD_FONT);
-        add(lblUserType);
-
+        addLabel("Login As", 300, PADDING_VERTICAL + (COMPONENT_HEIGHT * 2) + 20, 100, 20);
         choiceUserType = new Choice();
         choiceUserType.add("Admin");
         choiceUserType.add("Customer");
@@ -84,197 +43,131 @@ public class Login extends JFrame implements ActionListener {
         choiceUserType.setFont(STANDARD_FONT);
         add(choiceUserType);
 
-        // Calculate the Y position for the first row of buttons
+        // --- Buttons ---
         int buttonY = PADDING_VERTICAL + (COMPONENT_HEIGHT * 3) + 40;
-
-        // --- 4. Login Button (Primary Action) ---
-        ImageIcon loginIcon;
+        btnLogin = createButton("Login", "icon/login.png", 300, buttonY, 130, BUTTON_HEIGHT, false);   // Primary
+        btnSignup = createButton("Signup", "icon/signup.png", 450, buttonY, 130, BUTTON_HEIGHT, false); // Secondary
+        btnCancel = createButton("Exit Application", "icon/cancel.jpg", 375, buttonY + BUTTON_HEIGHT + 10, 130, BUTTON_HEIGHT, false); // Secondary
+        // --- Frame Logo ---
+        
         try {
-            // Renamed local image variables to follow CamelCasing
-            ImageIcon loginImageIcon = new ImageIcon(ClassLoader.getSystemResource("icon/login.png"));
-            Image scaledLoginImage = loginImageIcon.getImage().getScaledInstance(16, 16, Image.SCALE_DEFAULT);
-            loginIcon = new ImageIcon(scaledLoginImage);
+            ImageIcon logoIcon = new ImageIcon(ClassLoader.getSystemResource("icon/LoginPageLogo.jpg"));
+            Image scaled = logoIcon.getImage().getScaledInstance(250, 300, Image.SCALE_DEFAULT);
+            JLabel lblLogo = new JLabel(new ImageIcon(scaled));
+            lblLogo.setBounds(0, 0, 250, 300);
+            add(lblLogo);
         } catch (Exception e) {
-            System.err.println("Login icon not found. Falling back to text button.");
-            loginIcon = null;
+            System.err.println("Logo image not found: " + e.getMessage());
         }
 
-        btnLogin = new JButton("Login", loginIcon);
-        btnLogin.setBounds(300, buttonY, 130, BUTTON_HEIGHT);
-        btnLogin.addActionListener(this);
-
-        // Apply PRIMARY_ACCENT_BLUE style for high visibility and primary action
-        btnLogin.setBackground(PRIMARY_ACCENT_BLUE);
-        btnLogin.setForeground(Color.WHITE);
-        btnLogin.setFont(STANDARD_FONT);
-        add(btnLogin);
-
-        // --- 5. Cancel Button (Secondary Action) ---
-        ImageIcon cancelIcon;
-        try {
-            ImageIcon cancelImageIcon = new ImageIcon(ClassLoader.getSystemResource("icon/cancel.jpg"));
-            Image scaledCancelImage = cancelImageIcon.getImage().getScaledInstance(16, 16, Image.SCALE_DEFAULT);
-            cancelIcon = new ImageIcon(scaledCancelImage);
-        } catch (Exception e) {
-            System.err.println("Cancel icon not found. Falling back to text button.");
-            cancelIcon = null;
-        }
-
-        btnCancel = new JButton("Cancel", cancelIcon);
-        btnCancel.setBounds(450, buttonY, 130, BUTTON_HEIGHT);
-        btnCancel.addActionListener(this);
-
-        // Apply secondary style: White BG, Blue FG, high contrast
-        btnCancel.setBackground(Color.WHITE);
-        btnCancel.setForeground(PRIMARY_ACCENT_BLUE);
-        btnCancel.setFont(STANDARD_FONT);
-        // Note: For Swing, border must be managed manually for the full effect.
-        add(btnCancel);
-
-        // --- 6. Sign Up Button (Secondary Action) ---
-        ImageIcon signupIcon;
-        try {
-            ImageIcon signupImageIcon = new ImageIcon(ClassLoader.getSystemResource("icon/signup.png"));
-            Image scaledSignupImage = signupImageIcon.getImage().getScaledInstance(16, 16, Image.SCALE_DEFAULT);
-            signupIcon = new ImageIcon(scaledSignupImage);
-        } catch (Exception e) {
-            System.err.println("Signup icon not found. Falling back to text button.");
-            signupIcon = null;
-        }
-
-        // Positioned centrally below the login/cancel buttons
-        btnSignup = new JButton("Signup", signupIcon);
-        btnSignup.setBounds(375, buttonY + BUTTON_HEIGHT + 10, 130, BUTTON_HEIGHT);
-        btnSignup.addActionListener(this);
-
-        // Apply secondary style
-        btnSignup.setBackground(Color.WHITE);
-        btnSignup.setForeground(PRIMARY_ACCENT_BLUE);
-        btnSignup.setFont(STANDARD_FONT);
-        add(btnSignup);
-
-        // --- 7. Frame Logo Image ---
-        try {
-            // Renamed local image variables
-            ImageIcon logoImageIcon = new ImageIcon(ClassLoader.getSystemResource("icon/MainFrameLogo.jpg"));
-            Image scaledLogoImage = logoImageIcon.getImage().getScaledInstance(250, 300, Image.SCALE_DEFAULT);
-            ImageIcon finalLogoIcon = new ImageIcon(scaledLogoImage);
-
-            // Renamed JLabel to follow convention
-            JLabel lblLogoImage = new JLabel(finalLogoIcon);
-            lblLogoImage.setBounds(0, 0, 250, 300);
-            add(lblLogoImage);
-        } catch (Exception e) {
-            System.err.println("MainFrameLogo image not found: " + e.getMessage());
-        }
-
-        // Frame Settings
-        setSize(640, 380); // Adjusted size slightly to accommodate larger buttons
-        setLocationRelativeTo(null); // Center frame dynamically
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(640, 380);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
         setVisible(true);
     }
 
-    /**
-     * Handles action events from the buttons (Login, Cancel, Signup).
-     * @param ae The action event triggered by a component.
-     */
+    private JLabel addLabel(String text, int x, int y, int width, int height) {
+        JLabel lbl = new JLabel(text);
+        lbl.setBounds(x, y, width, height);
+        lbl.setFont(STANDARD_FONT);
+        add(lbl);
+        return lbl;
+    }
+
+    private JTextField addTextField(int x, int y, int width, int height) {
+        JTextField txt = new JTextField();
+        txt.setBounds(x, y, width, height);
+        txt.setFont(STANDARD_FONT);
+        add(txt);
+        return txt;
+    }
+
+    private JPasswordField addPasswordField(int x, int y, int width, int height) {
+        JPasswordField txt = new JPasswordField();
+        txt.setBounds(x, y, width, height);
+        txt.setFont(STANDARD_FONT);
+        add(txt);
+        return txt;
+    }
+
+    private JButton createButton(String text, String iconPath, int x, int y, int width, int height, boolean isPrimary) {
+        JButton btn;
+        try {
+            ImageIcon icon = new ImageIcon(ClassLoader.getSystemResource(iconPath));
+            Image scaled = icon.getImage().getScaledInstance(16, 16, Image.SCALE_DEFAULT);
+            btn = new JButton(text, new ImageIcon(scaled));
+        } catch (Exception e) {
+            System.err.println(iconPath + " not found. Using text button.");
+            btn = new JButton(text);
+        }
+
+        btn.setBounds(x, y, width, height);
+        btn.setFont(STANDARD_FONT);
+
+        if (isPrimary) {
+            btn.setBackground(PRIMARY_ACCENT_BLUE); // Blue background
+            btn.setForeground(Color.WHITE);         // White text
+        } else {
+            btn.setBackground(Color.WHITE);         // White background
+            btn.setForeground(PRIMARY_ACCENT_BLUE); // Blue text
+            btn.setBorder(BorderFactory.createLineBorder(PRIMARY_ACCENT_BLUE, 2)); // Blue border
+        }
+
+        btn.addActionListener(this);
+        add(btn);
+        return btn;
+    }
+
     @Override
     public void actionPerformed(ActionEvent ae) {
         if (ae.getSource() == btnLogin) {
             handleLogin();
         } else if (ae.getSource() == btnCancel) {
-            // Step 1: Hide the current frame
-            setVisible(false);
-            dispose(); // Release resources
-            // Step 2: Exit the application
+            dispose();
             System.exit(0);
         } else if (ae.getSource() == btnSignup) {
-            // Navigate to the SignUp frame
-            setVisible(false);
-            dispose(); // Release resources
+            dispose();
             new SignUp();
         }
     }
 
-    /**
-     * Executes the login logic, including input validation and secure database query.
-     * Uses PreparedStatement to prevent SQL Injection (BVA/Security Fix).
-     */
     private void handleLogin() {
-        // --- Input Fetching and Naming ---
-        String inputUsername = txtUsername.getText();
+        String susername = txtUsername.getText();
         char[] passwordChars = txtPassword.getPassword();
-        String inputPassword = new String(passwordChars);
-        String selectedUserType = choiceUserType.getSelectedItem();
+        String spassword = new String(passwordChars);
+        String user = choiceUserType.getSelectedItem();
 
-        // BVA: Check for empty fields before connecting to the database
-        if (inputUsername.isEmpty() || inputPassword.isEmpty()) {
+        if (susername.isEmpty() || spassword.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please enter both Username and Password.", "Input Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        Connection dbConn = null;
-
-        try {
-            // 1. Establish DB connection
-            DBConnection conn = new DBConnection();
-            // CORRECTED: Using the public getter method 'getConnection()' from DBConnection.
-            dbConn = conn.getConnection();
-
-            // Handle null connection (DB failure)
+        try (Connection dbConn = new DBConnection().getConnection()) {
             if (dbConn == null) {
-                return; // Error message already shown in DBConnection constructor
+                return;
             }
-
-            // --- CRITICAL SECURITY FIX: Use PreparedStatement ---
             String query = "SELECT * FROM login WHERE username = ? AND password = ? AND userType = ?";
-
-            // Use PreparedStatement for secure query execution
-            // try-with-resources ensures pst is closed, even on exception
             try (PreparedStatement pst = dbConn.prepareStatement(query)) {
+                pst.setString(1, susername);
+                pst.setString(2, spassword);
+                pst.setString(3, user);
 
-                // Bind user input securely to the placeholders
-                pst.setString(1, inputUsername);
-                pst.setString(2, inputPassword);
-                pst.setString(3, selectedUserType);
-
-                // Execute the query
-                // try-with-resources ensures rs is closed, even on exception
                 try (ResultSet rs = pst.executeQuery()) {
                     if (rs.next()) {
-                        // Login Successful: Navigate to MainHomePage
-                        String meterNumber = rs.getString("meter_no"); // Assuming a meter number column is present
-                        setVisible(false);
+                        String meter = rs.getString("meter_no");
                         dispose();
-                        // FIX: Pass the userType and meterNumber to the MainHomePage constructor.
-                        new MainHomePage(selectedUserType, meterNumber);
+                        new MainHomePage(user, meter);
                     } else {
-                        // Login Failed: notify user and clear fields
                         JOptionPane.showMessageDialog(this, "Invalid Username or Password for the selected user type.", "Login Failed", JOptionPane.ERROR_MESSAGE);
                         txtPassword.setText("");
                         txtUsername.setText("");
                     }
                 }
             }
-
-            // SECURITY BEST PRACTICE: Zero out the char array containing the password
-            // Note: This is a robust security measure, though not strictly required for functionality.
             Arrays.fill(passwordChars, ' ');
-
         } catch (Exception e) {
-            // Catch connection or SQL errors
-            JOptionPane.showMessageDialog(this, "A connection error occurred. Please try again later.", "Database Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Database error. Check connection.", "Error", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
-        } finally {
-            // Connection cleanup
-            try {
-                if (dbConn != null) {
-                    dbConn.close();
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
         }
     }
 
