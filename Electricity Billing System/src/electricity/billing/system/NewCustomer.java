@@ -2,143 +2,136 @@ package electricity.billing.system;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Random;
 import java.awt.event.*;
-import java.sql.*; // REQUIRED for DBConnection and SQL operations
+import java.sql.*;
+import java.util.Random;
 
+/**
+ * NewCustomer class handles creating a new customer, inserting into Customer and Login tables,
+ * and navigating to MeterInfo after successful registration.
+ * 
+ * Cancel button returns to the already-running MainHomePage instead of creating a new one.
+ */
 public class NewCustomer extends JFrame implements ActionListener {
 
-    // Declare all components globally following the txt, lbl, btn naming conventions
-    JTextField txtCustomerName, txtAddress, txtState, txtCity, txtEmail, txtPhone;
-    JButton btnNext, btnCancel;
-    JLabel lblMeterNumber;
+    private MainHomePage mainHome; // Reference to main homepage
 
-    NewCustomer() {
+    // --- Form Fields ---
+    private JTextField txtCustomerName, txtAddress, txtCity, txtState, txtEmail, txtPhone;
+    private JLabel lblMeterNumber;
+    private JButton btnNext, btnCancel;
+
+    public NewCustomer(MainHomePage mainHome) {
         super("New Customer Registration");
-        
-        // --- Frame Setup ---
+        this.mainHome = mainHome;
+
         setSize(700, 500);
         setLocation(400, 150);
+        setLayout(new BorderLayout());
 
-        // Define fonts based on mandate
+        JPanel panel = new JPanel();
+        panel.setLayout(null);
+        panel.setBackground(Color.WHITE);
+        add(panel, BorderLayout.CENTER);
+
+        // --- Fonts ---
         Font headingFont = new Font("SanSerif", Font.BOLD, 22);
         Font labelFont = new Font("SanSerif", Font.PLAIN, 14);
 
-        // --- Panel Setup ---
-        JPanel p = new JPanel();
-        p.setLayout(null);
-        // Use mandated white background
-        p.setBackground(Color.WHITE); 
-        
-        // Use BorderLayout for the frame, adding the panel to the center and image to the left
-        setLayout(new BorderLayout());
-        add(p, "Center");
-
         // --- Heading ---
         JLabel lblHeading = new JLabel("New Customer Registration");
-        lblHeading.setBounds(180, 10, 300, 25);
+        lblHeading.setBounds(180, 10, 400, 25);
         lblHeading.setFont(headingFont);
-        // Use mandated primary accent blue color
         lblHeading.setForeground(new Color(0, 122, 255));
-        p.add(lblHeading);
+        panel.add(lblHeading);
 
-        // --- 1. Customer Name ---
+        // --- Customer Name ---
         JLabel lblCustomerName = new JLabel("Customer Name:");
         lblCustomerName.setBounds(100, 80, 120, 20);
         lblCustomerName.setFont(labelFont);
-        p.add(lblCustomerName);
+        panel.add(lblCustomerName);
 
         txtCustomerName = new JTextField();
         txtCustomerName.setBounds(240, 80, 200, 20);
         txtCustomerName.setFont(labelFont);
-        p.add(txtCustomerName);
+        panel.add(txtCustomerName);
 
-        // --- 2. Meter Number Label ---
+        // --- Meter Number Label ---
         JLabel lblMeterNo = new JLabel("Meter Number:");
         lblMeterNo.setBounds(100, 120, 120, 20);
         lblMeterNo.setFont(labelFont);
-        p.add(lblMeterNo);
+        panel.add(lblMeterNo);
 
-        // Label to display the generated meter number
-        lblMeterNumber = new JLabel();
+        lblMeterNumber = new JLabel(generateUniqueMeter());
         lblMeterNumber.setBounds(240, 120, 200, 20);
         lblMeterNumber.setFont(new Font("SanSerif", Font.BOLD, 14));
-        lblMeterNumber.setForeground(Color.RED); 
-        p.add(lblMeterNumber);
+        lblMeterNumber.setForeground(Color.RED);
+        panel.add(lblMeterNumber);
 
-        // --- Random Meter Number Generation ---
-        Random ran = new Random();
-        // Generates a random number and formats it to ensure a 6-digit display
-        long number = Math.abs(ran.nextLong() % 900000) + 100000; // Ensures 6 digits
-        lblMeterNumber.setText(String.valueOf(number));
-
-        // --- 3. Address ---
+        // --- Address ---
         JLabel lblAddress = new JLabel("Address:");
         lblAddress.setBounds(100, 160, 100, 20);
         lblAddress.setFont(labelFont);
-        p.add(lblAddress);
+        panel.add(lblAddress);
 
         txtAddress = new JTextField();
         txtAddress.setBounds(240, 160, 200, 20);
         txtAddress.setFont(labelFont);
-        p.add(txtAddress);
+        panel.add(txtAddress);
 
-        // --- 4. City ---
+        // --- City ---
         JLabel lblCity = new JLabel("City:");
         lblCity.setBounds(100, 200, 100, 20);
         lblCity.setFont(labelFont);
-        p.add(lblCity);
+        panel.add(lblCity);
 
         txtCity = new JTextField();
         txtCity.setBounds(240, 200, 200, 20);
         txtCity.setFont(labelFont);
-        p.add(txtCity);
+        panel.add(txtCity);
 
-        // --- 5. State ---
+        // --- State ---
         JLabel lblState = new JLabel("State:");
         lblState.setBounds(100, 240, 100, 20);
         lblState.setFont(labelFont);
-        p.add(lblState);
+        panel.add(lblState);
 
         txtState = new JTextField();
         txtState.setBounds(240, 240, 200, 20);
         txtState.setFont(labelFont);
-        p.add(txtState);
+        panel.add(txtState);
 
-        // --- 6. Email ---
+        // --- Email ---
         JLabel lblEmail = new JLabel("Email:");
         lblEmail.setBounds(100, 280, 100, 20);
         lblEmail.setFont(labelFont);
-        p.add(lblEmail);
+        panel.add(lblEmail);
 
         txtEmail = new JTextField();
         txtEmail.setBounds(240, 280, 200, 20);
         txtEmail.setFont(labelFont);
-        p.add(txtEmail);
+        panel.add(txtEmail);
 
-        // --- 7. Phone Number ---
+        // --- Phone ---
         JLabel lblPhone = new JLabel("Phone Number:");
         lblPhone.setBounds(100, 320, 120, 20);
         lblPhone.setFont(labelFont);
-        p.add(lblPhone);
+        panel.add(lblPhone);
 
         txtPhone = new JTextField();
         txtPhone.setBounds(240, 320, 200, 20);
         txtPhone.setFont(labelFont);
-        p.add(txtPhone);
+        panel.add(txtPhone);
 
-        // --- 8. Buttons (Apple-inspired look) ---
-        
-        // Primary Action Button (Blue Background, White Text)
+        // --- Buttons ---
         btnNext = new JButton("Next");
         btnNext.setBounds(120, 390, 100, 25);
-        btnNext.setBackground(new Color(0, 122, 255)); // Primary Accent Blue
+        btnNext.setBackground(new Color(0, 122, 255));
         btnNext.setForeground(Color.WHITE);
         btnNext.setFont(new Font("SanSerif", Font.BOLD, 14));
         btnNext.addActionListener(this);
-        p.add(btnNext);
+        panel.add(btnNext);
 
-        // Secondary Action Button (White Background, Dark Blue Text)
         btnCancel = new JButton("Cancel");
         btnCancel.setBounds(250, 390, 100, 25);
         btnCancel.setBackground(Color.WHITE);
@@ -146,85 +139,108 @@ public class NewCustomer extends JFrame implements ActionListener {
         btnCancel.setFont(new Font("SanSerif", Font.BOLD, 14));
         btnCancel.setBorder(BorderFactory.createLineBorder(new Color(0, 122, 255)));
         btnCancel.addActionListener(this);
-        p.add(btnCancel);
+        panel.add(btnCancel);
 
         // --- Image ---
-        ImageIcon i1 = new ImageIcon(ClassLoader.getSystemResource("icon/hicon1.jpg"));
-        Image i2 = i1.getImage().getScaledInstance(150, 300, Image.SCALE_DEFAULT);
-        ImageIcon i3 = new ImageIcon(i2);
-        JLabel image = new JLabel(i3);
-        add(image, "West"); // Add image to the West side of the BorderLayout
-
-        // Set the content pane background to the mandated light color
-        getContentPane().setBackground(new Color(230, 240, 250));
+        try {
+            ImageIcon i1 = new ImageIcon(ClassLoader.getSystemResource("icon/hicon1.jpg"));
+            Image i2 = i1.getImage().getScaledInstance(150, 300, Image.SCALE_DEFAULT);
+            JLabel image = new JLabel(new ImageIcon(i2));
+            add(image, "West");
+        } catch (Exception e) {
+            System.err.println("Image not found: " + e.getMessage());
+        }
 
         setVisible(true);
     }
 
+    // --- Generate Unique Meter Number ---
+    private String generateUniqueMeter() {
+        Random rand = new Random();
+        String meter = "";
+        boolean unique = false;
+        try {
+            DBConnection c = new DBConnection();
+            while (!unique) {
+                long number = Math.abs(rand.nextLong() % 900000) + 100000;
+                meter = String.valueOf(number);
+                ResultSet rs = c.getStatement().executeQuery(
+                        "SELECT meter_no FROM customer WHERE meter_no = '" + meter + "'");
+                if (!rs.next()) {
+                    unique = true;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            meter = "ERROR123"; // fallback
+        }
+        return meter;
+    }
+
+    @Override
     public void actionPerformed(ActionEvent ae) {
         if (ae.getSource() == btnNext) {
-            
-            // 1. Retrieve all form data using the new names
-            String name = txtCustomerName.getText();
-            String meter = lblMeterNumber.getText();
-            String address = txtAddress.getText();
-            String city = txtCity.getText();
-            String state = txtState.getText();
-            String email = txtEmail.getText();
-            String phone = txtPhone.getText();
 
-            // Basic Validation
+            String name = txtCustomerName.getText().trim();
+            String meter = lblMeterNumber.getText().trim();
+            String address = txtAddress.getText().trim();
+            String city = txtCity.getText().trim();
+            String state = txtState.getText().trim();
+            String email = txtEmail.getText().trim();
+            String phone = txtPhone.getText().trim();
+
             if (name.isEmpty() || address.isEmpty() || city.isEmpty() || state.isEmpty() || email.isEmpty() || phone.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please fill all customer details.");
+                JOptionPane.showMessageDialog(this, "Please fill all customer details.", "Input Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            
-            // 2. Define derived/fixed values for the LOGIN table
-            String loginUsername = meter;
-            String loginPassword = name; 
-            String userType = "Customer";
-
-            // 3. Construct SQL Queries
-            
-            // Query for 'customer' table (7 columns)
-            String query1 = "INSERT INTO customer VALUES('" + name + "', '" + meter + "', '" + address + "', '" + city + "', '" + state + "', '" + email + "', '" + phone + "')";
-
-            // Query for 'Login' table (5 columns - meter_no, username, password, userType, name)
-            String query2 = "INSERT INTO login VALUES('" + meter + "', '" + loginUsername + "', '" + loginPassword + "', '" + userType + "', '" + name + "')";
 
             try {
                 DBConnection c = new DBConnection();
 
-                // Execute both queries using the Statement object
-                c.stmt.executeUpdate(query1);
-                c.stmt.executeUpdate(query2);
+                // --- Insert into Customer ---
+                String custQuery = "INSERT INTO customer (customer_name, meter_no, address, city, state, email, phone) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                PreparedStatement pstCust = c.getConnection().prepareStatement(custQuery);
+                pstCust.setString(1, name);
+                pstCust.setString(2, meter);
+                pstCust.setString(3, address);
+                pstCust.setString(4, city);
+                pstCust.setString(5, state);
+                pstCust.setString(6, email);
+                pstCust.setString(7, phone);
+                pstCust.executeUpdate();
 
-                JOptionPane.showMessageDialog(null, "Customer Details and Login Credentials Added Successfully.\n\nMeter No: " + meter + "\nDefault Password: " + name);
-                
+                // --- Insert into Login ---
+                String loginQuery = "INSERT INTO login (meter_no, username, password, userType, name) VALUES (?, ?, ?, ?, ?)";
+                PreparedStatement pstLogin = c.getConnection().prepareStatement(loginQuery);
+                pstLogin.setString(1, meter);
+                pstLogin.setString(2, meter); // username = meter
+                pstLogin.setString(3, name);  // default password = name
+                pstLogin.setString(4, "Customer");
+                pstLogin.setString(5, name);
+                pstLogin.executeUpdate();
+
+                JOptionPane.showMessageDialog(this, "Customer added successfully!\nMeter No: " + meter + "\nDefault Password: " + name);
+
                 setVisible(false);
-                
-                // Navigate to the next frame to collect Meter Information (as per original logic)
-                new MeterInfo(meter);
-                
-            } catch (SQLException e) {
-                 if (e.getSQLState().equals("23000")) { // Handle duplicate entry error (e.g., if meter number already exists)
-                     JOptionPane.showMessageDialog(this, "Error: Meter Number " + meter + " already exists. Please try again.");
-                 } else {
-                     e.printStackTrace();
-                     JOptionPane.showMessageDialog(null, "Database Error: Failed to add data. Check logs for details: " + e.getMessage());
-                 }
-            } catch (Exception e) {
-                 e.printStackTrace();
-                 JOptionPane.showMessageDialog(null, "An unexpected error occurred: " + e.getMessage());
+                new MeterInfo(meter); // proceed to next step
+
+            } catch (SQLIntegrityConstraintViolationException ex) {
+                JOptionPane.showMessageDialog(this, "Meter number " + meter + " already exists.", "Duplicate Error", JOptionPane.ERROR_MESSAGE);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
 
         } else if (ae.getSource() == btnCancel) {
-            // Cancel button action
             setVisible(false);
+            if (mainHome != null) {
+                mainHome.setVisible(true); // Show existing main homepage
+            }
         }
     }
 
     public static void main(String[] args) {
-        new NewCustomer();
+        // For testing standalone, we pass null since no MainHomePage exists yet
+        new NewCustomer(null);
     }
 }

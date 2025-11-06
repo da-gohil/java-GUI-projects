@@ -7,60 +7,62 @@ import java.sql.Statement;
 import javax.swing.JOptionPane;
 
 /**
- * DBConnection class handles the connection to the MySQL database.
- * This class uses the standard JDBC approach and provides access to the 
- * Connection and Statement objects.
- *
- * IMPORTANT: The credentials (DB name, user, password) are hardcoded here 
- * and must be updated for actual use.
+ * DBConnection handles the MySQL database connection.
+ * Provides a reusable Connection and Statement object.
  *
  * @author danny
  */
 public class DBConnection {
-    
-    // Instance variables to hold the connection and statement objects
-    Connection conn;    
+
+    // ===== Database Configuration =====
+    private static final String DB_HOST = "localhost";
+    private static final String DB_PORT = "3306";
+    private static final String DB_NAME = "electricityBillingSystem_DB";
+    private static final String DB_USER = "root";
+    private static final String DB_PASSWORD = "abc123"; // Ideally, move to encrypted config
+
+    // JDBC objects
+    private Connection conn;
     Statement stmt;
 
     /**
-     * Constructor attempts to establish a connection to the MySQL database 
-     * and create a Statement object.
+     * Constructor attempts to establish a database connection and initialize Statement.
      */
-    public DBConnection() {    
+    public DBConnection() {
         try {
-            // 1. Load the JDBC Driver (Recommended best practice)
-            Class.forName("com.mysql.cj.jdbc.Driver"); 
-            
-            // 2. Establish Connection
-            // NOTE: Change "abc123" to your actual MySQL root password.
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/electricityBillingSystem_DB", "root", "abc123");
-            
-            // 3. Create Statement (Kept for compatibility with simple queries)
+            // Load JDBC driver explicitly
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+            // Build JDBC URL dynamically
+            String dbUrl = "jdbc:mysql://" + DB_HOST + ":" + DB_PORT + "/" + DB_NAME
+                           + "?useSSL=false&serverTimezone=UTC";
+
+            // Establish connection
+            conn = DriverManager.getConnection(dbUrl, DB_USER, DB_PASSWORD);
+
+            // Initialize statement
             stmt = conn.createStatement();
-            
-        } catch(Exception e) {
-            // Inform the user if the connection fails
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Database Connection Failed! Check Server/Driver/Credentials.");
-            // Set connection to null if it failed
-            conn = null;
-            stmt = null;
+
+        } catch (ClassNotFoundException e) {
+            System.err.println("JDBC Driver not found: " + e.getMessage());
+            JOptionPane.showMessageDialog(null, "JDBC Driver not found. Contact Admin.");
+        } catch (SQLException e) {
+            System.err.println("Database connection failed: " + e.getMessage());
+            JOptionPane.showMessageDialog(null, "Database Connection Failed! Check server or credentials.");
         }
     }
-    
+
     /**
-     * Provides the established database connection object.
-     * This is essential for classes like Login and SignUp to create a 
-     * PreparedStatement for secure query execution.
-     * @return The active java.sql.Connection, or null if connection failed.
+     * Returns the active Connection object.
+     * @return Connection or null if not connected.
      */
     public Connection getConnection() {
         return conn;
     }
-    
+
     /**
-     * Provides the initialized Statement object.
-     * @return The active java.sql.Statement, or null if connection failed.
+     * Returns the initialized Statement object.
+     * @return Statement or null if connection failed.
      */
     public Statement getStatement() {
         return stmt;

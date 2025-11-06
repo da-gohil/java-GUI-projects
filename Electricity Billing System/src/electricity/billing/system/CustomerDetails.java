@@ -7,68 +7,73 @@ import net.proteanit.sql.DbUtils;
 import java.awt.event.*;
 
 /**
- * The CustomerDetails class displays a comprehensive list of all customer records
- * stored in the database. This is typically an Admin-only function.
+ * CustomerDetails class displays all customer records dynamically from the database.
+ * Designed for Admin users, with robust database handling and optional printing.
  */
 public class CustomerDetails extends JFrame implements ActionListener {
 
-    // JTable for displaying all customer data from the 'customer' table
-    JTable table;
-    // Button to trigger the print action
-    JButton print;
-    
-    CustomerDetails(){
+    private JTable table;
+    private JButton print;
+
+    public CustomerDetails() {
         super("All Customer Details");
-        
-        // Setting up the frame dimensions and position
+
+        // Frame setup
         setSize(1200, 650);
-        setLocation(200, 150);
-        
-        // Initialize the table
+        setLocationRelativeTo(null); // center the frame
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        // Initialize table
         table = new JTable();
-        
-        try {
-            // Establish connection and fetch all data from the customer table
-            // IMPORTANT CHANGE: Now using the centralized DBConnection class
-            DBConnection db = new DBConnection();
-            
-            // Assuming 'customer' table columns are: name, meterno, address, city, state, email, phone
-            // Accessing the Statement object through the getStatement() method
-            ResultSet rs = db.getStatement().executeQuery("select * from customer");
-            
-            // Use DbUtils to convert the ResultSet into a JTable model
-            table.setModel(DbUtils.resultSetToTableModel(rs));
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error fetching customer details. Check DB connection/table.", "Database Error", JOptionPane.ERROR_MESSAGE);
-        }
-        
-        // Wrap the table in a JScrollPane to enable scrolling if data exceeds display area
         JScrollPane sp = new JScrollPane(table);
-        add(sp, BorderLayout.CENTER); // Add scroll pane to the center of the frame
-        
-        // Setup the Print button
+        add(sp, BorderLayout.CENTER);
+
+        // Print button
         print = new JButton("Print");
+        print.setFont(new Font("Tahoma", Font.BOLD, 14));
+        print.setBackground(new Color(0, 122, 255));
+        print.setForeground(Color.WHITE);
         print.addActionListener(this);
-        // Add the button to the bottom (South) of the frame using BorderLayout
         add(print, BorderLayout.SOUTH);
-        
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Closes this window only
+
+        // Load customer data
+        loadCustomerData();
+
         setVisible(true);
     }
-    
+
     /**
-     * Handles the Print button action.
-     * @param ae The action event.
+     * Dynamically loads customer data from the database.
+     * Uses try-with-resources to avoid resource leaks.
      */
+    private void loadCustomerData() {
+        String query = "SELECT * FROM customer"; // Adjust columns as per your DB
+        try (Connection conn = new DBConnection().getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            table.setModel(DbUtils.resultSetToTableModel(rs));
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                    "Error fetching customer details. Please check your database connection and table structure.",
+                    "Database Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    @Override
     public void actionPerformed(ActionEvent ae) {
         if (ae.getSource() == print) {
             try {
-                // Use the built-in JTable print function
                 table.print();
             } catch (Exception e) {
                 e.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Could not print the table.", "Print Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "Could not print the table.",
+                        "Print Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }

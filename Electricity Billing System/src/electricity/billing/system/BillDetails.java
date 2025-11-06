@@ -3,54 +3,71 @@ package electricity.billing.system;
 import javax.swing.*;
 import java.awt.*;
 import java.sql.*;
-import net.proteanit.sql.DbUtils; // IMPORTANT: This relies on the rs2xml.jar library
+import net.proteanit.sql.DbUtils;
 
-public class BillDetails extends JFrame{
+/**
+ * BillDetails class fetches and displays all bills for a given meter number.
+ * Typically used in both Admin and Customer views.
+ */
+public class BillDetails extends JFrame {
 
-    /**
-     * BillDetails constructor fetches and displays all bills for a given meter number.
-     * @param meter The meter number for which to display bills.
-     */
-    BillDetails(String meter) {
-        
-        // Set up the main frame properties
+    private JTable table;
+    private String meterNumber;
+
+    public BillDetails(String meter) {
+        super("Bill Details - Meter: " + meter);
+
+        this.meterNumber = meter;
+
+        // --- Frame Setup ---
         setSize(700, 650);
-        setLocation(400, 150);
-        setLayout(new BorderLayout()); // Use BorderLayout for better structure
-        
+        setLocationRelativeTo(null); // Center on screen
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setLayout(new BorderLayout());
         getContentPane().setBackground(Color.WHITE);
-        
-        JTable table = new JTable();
-        
-        try {
-            // Using the consistent DBConnection class
-            DBConnection c = new DBConnection(); 
-            // Query to fetch all bill records for the specific meter
-            String query = "SELECT * FROM bill WHERE meter_no = '"+meter+"'";
-            
-            // Execute query using the statement object (stmt)
-            ResultSet rs = c.stmt.executeQuery(query);
-            
-            // Use DbUtils to convert the ResultSet into a TableModel
-            table.setModel(DbUtils.resultSetToTableModel(rs));
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            // Display error message to the user
-            JOptionPane.showMessageDialog(this, "Error loading bill data: " + e.getMessage());
-        }
-        
-        // Add the table to a scroll pane
+
+        // --- Table Setup ---
+        table = new JTable();
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        table.setFillsViewportHeight(true);
+
+        // --- Fetch Data ---
+        loadBillData();
+
+        // --- Scroll Pane ---
         JScrollPane sp = new JScrollPane(table);
-        
-        // Add the scroll pane to the center of the frame
         add(sp, BorderLayout.CENTER);
-        
+
         setVisible(true);
     }
 
+    /**
+     * Fetches bill records for the given meter and sets the JTable model.
+     */
+    private void loadBillData() {
+        try {
+            DBConnection db = new DBConnection();
+            String query = "SELECT month, year, units, total_bill, status FROM bill WHERE meter_no = ?";
+            PreparedStatement pst = db.getConnection().prepareStatement(query);
+            pst.setString(1, meterNumber);
+            ResultSet rs = pst.executeQuery();
+
+            table.setModel(DbUtils.resultSetToTableModel(rs));
+
+            if (!rs.isBeforeFirst()) { // No rows returned
+                JOptionPane.showMessageDialog(this, "No bills found for meter: " + meterNumber,
+                        "No Data", JOptionPane.INFORMATION_MESSAGE);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading bill data: " + e.getMessage(),
+                    "Database Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     public static void main(String[] args) {
-        // Example usage, pass a meter number when calling this frame
-        new BillDetails("100123"); 
+        // Example usage, replace with a real meter number
+        new BillDetails("100123");
     }
 }
