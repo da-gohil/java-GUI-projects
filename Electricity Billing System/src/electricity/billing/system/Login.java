@@ -17,55 +17,84 @@ public class Login extends JFrame implements ActionListener {
     private Choice choiceUserType;
     private JButton btnLogin, btnCancel, btnSignup;
 
+    // --- UI Consistency Constants ---
+    private static final int FRAME_WIDTH = 1024; // MANDATED FIXED SIZE
+    private static final int FRAME_HEIGHT = 768; // MANDATED FIXED SIZE
+    
+    // Assumed original size of the logo image for non-resizing mandate
+    private static final int LOGO_WIDTH = 350; 
+    private static final int LOGO_HEIGHT = 500; 
+
+    // Calculate X-start for the centered content block (to the right of the logo)
+    private static final int CONTENT_PANEL_START_X = LOGO_WIDTH + 100; // 350 (logo) + 100 (gap) = 450
+    private static final int LOGIN_FORM_WIDTH = 450; // Total width for the input group
+    
     private static final Color PRIMARY_ACCENT_BLUE = new Color(0, 122, 255);
-    private static final Font STANDARD_FONT = new Font("Tahoma", Font.PLAIN, 14);
-    private static final int COMPONENT_HEIGHT = 25;
-    private static final int BUTTON_HEIGHT = 35;
-    private static final int PADDING_VERTICAL = 20; // Slightly increased for readability
+    private static final Font STANDARD_FONT = new Font("Tahoma", Font.BOLD, 14);
+    private static final int COMPONENT_HEIGHT = 30;
+    private static final int BUTTON_HEIGHT = 40;
+    private static final int PADDING_VERTICAL = 150; // Start position from the top
 
     public Login() {
         super("Welcome to Electricity Billing Management: Login Page");
         getContentPane().setBackground(Color.WHITE);
-        setLayout(null);
+        setLayout(null); 
 
-        // --- Labels and Inputs ---
-        addLabel("Username", 300, PADDING_VERTICAL, 100, 20);
-        txtUsername = addTextField(400, PADDING_VERTICAL, 180, COMPONENT_HEIGHT);
+        // --- Frame Settings (ENFORCING UI MANDATE) ---
+        setSize(FRAME_WIDTH, FRAME_HEIGHT);
+        setResizable(false); // Disable resizing to maintain 1024x768
+        setLocationRelativeTo(null); // Center frame on screen
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-        addLabel("Password", 300, PADDING_VERTICAL + COMPONENT_HEIGHT + 10, 100, 20);
-        txtPassword = addPasswordField(400, PADDING_VERTICAL + COMPONENT_HEIGHT + 10, 180, COMPONENT_HEIGHT);
-
-        addLabel("Login As", 300, PADDING_VERTICAL + (COMPONENT_HEIGHT * 2) + 20, 100, 20);
-        choiceUserType = new Choice();
-        choiceUserType.add("Admin");
-        choiceUserType.add("Customer");
-        choiceUserType.setBounds(400, PADDING_VERTICAL + (COMPONENT_HEIGHT * 2) + 20, 180, COMPONENT_HEIGHT);
-        choiceUserType.setFont(STANDARD_FONT);
-        add(choiceUserType);
-
-        // --- Buttons ---
-        int buttonY = PADDING_VERTICAL + (COMPONENT_HEIGHT * 3) + 40;
-        btnLogin = createButton("Login", "icon/login.png", 300, buttonY, 130, BUTTON_HEIGHT, false);   // Primary
-        btnSignup = createButton("Signup", "icon/signup.png", 450, buttonY, 130, BUTTON_HEIGHT, false); // Secondary
-        btnCancel = createButton("Exit Application", "icon/cancel.jpg", 375, buttonY + BUTTON_HEIGHT + 10, 130, BUTTON_HEIGHT, false); // Secondary
-        // --- Frame Logo ---
-        
+        // --- Frame Logo (Fixed Size, Left Side) ---
         try {
             ImageIcon logoIcon = new ImageIcon(ClassLoader.getSystemResource("icon/LoginPageLogo.jpg"));
-            Image scaled = logoIcon.getImage().getScaledInstance(250, 300, Image.SCALE_DEFAULT);
-            JLabel lblLogo = new JLabel(new ImageIcon(scaled));
-            lblLogo.setBounds(0, 0, 250, 300);
+            // DO NOT RESIZE: Use the image at its original size (350x500 assumption)
+            JLabel lblLogo = new JLabel(logoIcon);
+            lblLogo.setBounds(0, (FRAME_HEIGHT - LOGO_HEIGHT) / 2, LOGO_WIDTH, LOGO_HEIGHT); // Center vertically
             add(lblLogo);
         } catch (Exception e) {
             System.err.println("Logo image not found: " + e.getMessage());
         }
 
-        setSize(640, 380);
-        setLocationRelativeTo(null);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        // --- Centered Labels and Inputs (Right Side) ---
+        int yOffset = PADDING_VERTICAL;
+        int labelX = CONTENT_PANEL_START_X;
+        int fieldX = labelX + 110;
+        int inputWidth = 250;
+
+        addLabel("Username", labelX, yOffset, 100, 20);
+        txtUsername = addTextField(fieldX, yOffset, inputWidth, COMPONENT_HEIGHT);
+        yOffset += COMPONENT_HEIGHT + 20;
+
+        addLabel("Password", labelX, yOffset, 100, 20);
+        txtPassword = addPasswordField(fieldX, yOffset, inputWidth, COMPONENT_HEIGHT);
+        yOffset += COMPONENT_HEIGHT + 20;
+
+        addLabel("Login As", labelX, yOffset, 100, 20);
+        choiceUserType = new Choice();
+        choiceUserType.add("Admin");
+        choiceUserType.add("Customer");
+        choiceUserType.setBounds(fieldX, yOffset, inputWidth, COMPONENT_HEIGHT);
+        choiceUserType.setFont(STANDARD_FONT);
+        add(choiceUserType);
+        yOffset += COMPONENT_HEIGHT + 50;
+
+        // --- Buttons (Centered within the right panel) ---
+        int buttonGroupStart = CONTENT_PANEL_START_X;
+        int buttonWidth = 150;
+        int spacing = 50;
+        
+        btnLogin = createButton("Login", "icon/login.png", buttonGroupStart, yOffset, buttonWidth, BUTTON_HEIGHT, true);   
+        btnSignup = createButton("Signup", "icon/signup.png", buttonGroupStart + buttonWidth + spacing, yOffset, buttonWidth, BUTTON_HEIGHT, false); 
+        yOffset += BUTTON_HEIGHT + 20;
+        
+        btnCancel = createButton("Exit Application", "icon/cancel.jpg", buttonGroupStart, yOffset, buttonWidth * 2 + spacing, BUTTON_HEIGHT, false);
+        
         setVisible(true);
     }
-
+    
+    // Helper methods (addLabel, addTextField, createButton) remain the same...
     private JLabel addLabel(String text, int x, int y, int width, int height) {
         JLabel lbl = new JLabel(text);
         lbl.setBounds(x, y, width, height);
@@ -78,6 +107,7 @@ public class Login extends JFrame implements ActionListener {
         JTextField txt = new JTextField();
         txt.setBounds(x, y, width, height);
         txt.setFont(STANDARD_FONT);
+        txt.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         add(txt);
         return txt;
     }
@@ -86,6 +116,7 @@ public class Login extends JFrame implements ActionListener {
         JPasswordField txt = new JPasswordField();
         txt.setBounds(x, y, width, height);
         txt.setFont(STANDARD_FONT);
+        txt.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         add(txt);
         return txt;
     }
@@ -94,23 +125,25 @@ public class Login extends JFrame implements ActionListener {
         JButton btn;
         try {
             ImageIcon icon = new ImageIcon(ClassLoader.getSystemResource(iconPath));
-            Image scaled = icon.getImage().getScaledInstance(16, 16, Image.SCALE_DEFAULT);
+            Image scaled = icon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
             btn = new JButton(text, new ImageIcon(scaled));
         } catch (Exception e) {
-            System.err.println(iconPath + " not found. Using text button.");
             btn = new JButton(text);
         }
 
         btn.setBounds(x, y, width, height);
         btn.setFont(STANDARD_FONT);
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         if (isPrimary) {
-            btn.setBackground(PRIMARY_ACCENT_BLUE); // Blue background
-            btn.setForeground(Color.WHITE);         // White text
+            btn.setBackground(PRIMARY_ACCENT_BLUE);
+            btn.setForeground(Color.WHITE);
+            btn.setBorder(BorderFactory.createEmptyBorder());
         } else {
-            btn.setBackground(Color.WHITE);         // White background
-            btn.setForeground(PRIMARY_ACCENT_BLUE); // Blue text
-            btn.setBorder(BorderFactory.createLineBorder(PRIMARY_ACCENT_BLUE, 2)); // Blue border
+            btn.setBackground(Color.WHITE);
+            btn.setForeground(PRIMARY_ACCENT_BLUE);
+            btn.setBorder(BorderFactory.createLineBorder(PRIMARY_ACCENT_BLUE, 2));
         }
 
         btn.addActionListener(this);
@@ -127,7 +160,7 @@ public class Login extends JFrame implements ActionListener {
             System.exit(0);
         } else if (ae.getSource() == btnSignup) {
             dispose();
-            new SignUp();
+            new SignUp(); 
         }
     }
 
@@ -144,7 +177,8 @@ public class Login extends JFrame implements ActionListener {
 
         try (Connection dbConn = new DBConnection().getConnection()) {
             if (dbConn == null) {
-                return;
+                 // DBConnection constructor already shows an error dialog.
+                 return;
             }
             String query = "SELECT * FROM login WHERE username = ? AND password = ? AND userType = ?";
             try (PreparedStatement pst = dbConn.prepareStatement(query)) {
@@ -156,7 +190,8 @@ public class Login extends JFrame implements ActionListener {
                     if (rs.next()) {
                         String meter = rs.getString("meter_no");
                         dispose();
-                        new MainHomePage(user, meter);
+                        // SUCCESS: Transition to the main application page
+                        new MainHomePage(user, meter); 
                     } else {
                         JOptionPane.showMessageDialog(this, "Invalid Username or Password for the selected user type.", "Login Failed", JOptionPane.ERROR_MESSAGE);
                         txtPassword.setText("");
@@ -164,9 +199,10 @@ public class Login extends JFrame implements ActionListener {
                     }
                 }
             }
+            // Clear the password array for security
             Arrays.fill(passwordChars, ' ');
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Database error. Check connection.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "An application error occurred during login.", "Error", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
     }

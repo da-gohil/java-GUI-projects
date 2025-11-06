@@ -9,6 +9,10 @@ import java.util.HashMap;
 
 public class MainHomePage extends JFrame implements ActionListener {
 
+    // --- UI Consistency Constants ---
+    private static final int FRAME_WIDTH = 1024; // MANDATED FIXED SIZE
+    private static final int FRAME_HEIGHT = 768; // MANDATED FIXED SIZE
+
     private String userType;
     private String meterNumber;
     private HashMap<String, JMenuItem> menuItems = new HashMap<>();
@@ -22,19 +26,30 @@ public class MainHomePage extends JFrame implements ActionListener {
         this.userType = userType;
         this.meterNumber = meterNumber;
 
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        // --- ENFORCING FIXED SIZE MANDATE ---
+        setSize(FRAME_WIDTH, FRAME_HEIGHT);
+        setResizable(false); // Disable resizing
+        setLocationRelativeTo(null); // Center on screen
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // Load main background image safely
-        JLabel mainImage = loadImageLabel("icon/MainHomePage.jpg", 1550, 850, "Main Home Page");
-        add(mainImage);
+        // --- Load main background image (Border-to-Border) ---
+        JLabel mainImage = loadImageLabel("icon/MainHomePage.jpg", FRAME_WIDTH, FRAME_HEIGHT, "Main Home Page");
+        if (mainImage != null) {
+            // Must use BorderLayout.CENTER to ensure the image covers the entire client area
+            add(mainImage, BorderLayout.CENTER);
+        } else {
+             // Fallback if image fails, set a plain background color
+             getContentPane().setBackground(new Color(230, 230, 230));
+        }
 
         JMenuBar mb = new JMenuBar();
-
+        mb.setBackground(Color.WHITE); 
+        
         // --- Admin Master Menu dynamically from DB or fallback ---
         if ("Admin".equalsIgnoreCase(this.userType)) {
             JMenu masterMenu = new JMenu("Master");
             masterMenu.setForeground(PRIMARY_BLUE);
+            masterMenu.setFont(new Font("SanSerif", Font.BOLD, 14));
 
             addMenuItem(masterMenu, "New Customer", "icon/newCustomerMenuLogo.png", 'D');
             addMenuItem(masterMenu, "Customer Details", "icon/icon2.png", 'M');
@@ -47,6 +62,7 @@ public class MainHomePage extends JFrame implements ActionListener {
         // --- Utility Menu for all users dynamically ---
         JMenu utilityMenu = new JMenu("Utility");
         utilityMenu.setForeground(TEXT_DARK);
+        utilityMenu.setFont(new Font("SanSerif", Font.BOLD, 14));
 
         addMenuItem(utilityMenu, "View Information", "icon/icon6.png", 'V');
         addMenuItem(utilityMenu, "Update Information", "icon/icon9.png", 'I');
@@ -62,6 +78,7 @@ public class MainHomePage extends JFrame implements ActionListener {
         if ("Admin".equalsIgnoreCase(this.userType)) {
             JMenu reportMenu = new JMenu("Report");
             reportMenu.setForeground(new Color(150, 0, 0));
+            reportMenu.setFont(new Font("SanSerif", Font.BOLD, 14));
             addMenuItem(reportMenu, "Bill Report", null, 'R');
             mb.add(reportMenu);
         }
@@ -69,6 +86,7 @@ public class MainHomePage extends JFrame implements ActionListener {
         // --- Tools Menu ---
         JMenu toolsMenu = new JMenu("Tools");
         toolsMenu.setForeground(TEXT_DARK);
+        toolsMenu.setFont(new Font("SanSerif", Font.BOLD, 14));
         addMenuItem(toolsMenu, "Notepad", "icon/icon11.png", 'T');
         addMenuItem(toolsMenu, "Calculator", "icon/icon12.png", 'A');
         mb.add(toolsMenu);
@@ -76,6 +94,7 @@ public class MainHomePage extends JFrame implements ActionListener {
         // --- Exit Menu ---
         JMenu exitMenu = new JMenu("Exit");
         exitMenu.setForeground(TEXT_DARK);
+        exitMenu.setFont(new Font("SanSerif", Font.BOLD, 14));
         addMenuItem(exitMenu, "Logout", null, 'O');
         addMenuItem(exitMenu, "Exit Application", null, 'E');
         mb.add(exitMenu);
@@ -87,7 +106,7 @@ public class MainHomePage extends JFrame implements ActionListener {
     // Helper: add menu item with safe icon loading
     private void addMenuItem(JMenu menu, String name, String iconPath, char mnemonic) {
         JMenuItem item = new JMenuItem(name);
-        item.setFont(new Font("SanSerif", Font.PLAIN, 12));
+        item.setFont(new Font("SanSerif", Font.PLAIN, 14)); 
         item.setBackground(Color.WHITE);
         item.setMnemonic(mnemonic);
         item.addActionListener(this);
@@ -109,10 +128,10 @@ public class MainHomePage extends JFrame implements ActionListener {
             java.net.URL url = ClassLoader.getSystemResource(path);
             if (url != null) {
                 ImageIcon icon = new ImageIcon(url);
-                Image scaled = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
+                Image scaled = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH); 
                 return new JLabel(new ImageIcon(scaled));
             } else {
-                System.err.println("Image not found: " + path);
+                // System.err.println("Image not found: " + path); // Debug output removed for cleaner final code
                 return new JLabel(fallbackText);
             }
         } catch (Exception e) {
@@ -132,7 +151,9 @@ public class MainHomePage extends JFrame implements ActionListener {
                     break;
                 case "Logout":
                     setVisible(false);
-                    new Login().setVisible(true);
+                    // NOTE: Assumes Login class exists and has a no-arg constructor
+                    new Login().setVisible(true); 
+                    dispose();
                     break;
                 case "Notepad":
                     Runtime.getRuntime().exec("notepad.exe");
@@ -150,54 +171,68 @@ public class MainHomePage extends JFrame implements ActionListener {
         }
     }
 
-    // Handle menu actions dynamically
+    // Handle menu actions dynamically (MODIFIED to pass 'this' for navigation)
     private void handleMenuAction(String action) {
-        // Dynamically determine classes or DB actions
+        this.setVisible(false); // Hide the main window before opening a task window
+        
         switch (action) {
             case "New Customer":
+                // NOTE: Assumes NewCustomer takes a MainHomePage reference
                 new NewCustomer(this).setVisible(true);
-                this.setVisible(false); // Optionally hide the main page until NewCustomer closes
                 break;
 
             case "Customer Details":
-                new CustomerDetails().setVisible(true);
+                // NOTE: Assumes CustomerDetails takes a MainHomePage reference
+                new CustomerDetails(this).setVisible(true); 
                 break;
             case "Deposit Details":
-                new DepositDetails().setVisible(true);
+                // NOTE: Assumes DepositDetails takes a MainHomePage reference
+                new DepositDetails(this).setVisible(true); 
                 break;
             case "Calculate Bill":
-                new CalculateBill().setVisible(true);
+                // MODIFIED: CalculateBill now requires 'this'
+                new CalculateBill(this).setVisible(true);
                 break;
             case "Bill Report":
-                new BillReport().setVisible(true);
+                // MODIFIED: BillReport now requires 'this'
+                new BillReport(this).setVisible(true);
                 break;
             case "Generate Bill":
-                new GenerateBill(this.meterNumber).setVisible(true);
+                // MODIFIED: GenerateBill now requires 'this'
+                new GenerateBill(this.meterNumber, this).setVisible(true);
                 break;
             case "View Information":
-                new ViewInformation(this.meterNumber).setVisible(true);
+                // NOTE: Assumes ViewInformation takes 'this'
+                new ViewInformation(this.meterNumber, this).setVisible(true);
                 break;
             case "Update Information":
-                new UpdateInformation(this.meterNumber).setVisible(true);
+                // NOTE: Assumes UpdateInformation takes 'this'
+                new UpdateInformation(this.meterNumber, this).setVisible(true);
                 break;
             case "Pay Bill":
-                new PayBill(this.meterNumber).setVisible(true);
+                // NOTE: Assumes PayBill takes 'this'
+                new PayBill(this.meterNumber, this).setVisible(true);
                 break;
             case "Bill Details":
-                new BillDetails(this.meterNumber).setVisible(true);
+                // MODIFIED: BillDetails now requires 'this'
+                new BillDetails(this.meterNumber, this).setVisible(true);
                 break;
             case "Payment History":
-                new PaymentHistory(this.meterNumber).setVisible(true);
+                // NOTE: Assumes PaymentHistory takes 'this'
+                new PaymentHistory(this.meterNumber, this).setVisible(true);
                 break;
             case "Change Password":
-                new ChangePassword(this.meterNumber).setVisible(true);
+                // MODIFIED: ChangePassword now requires 'this'
+                new ChangePassword(this.meterNumber, this).setVisible(true);
                 break;
             default:
                 JOptionPane.showMessageDialog(this, "Action not implemented yet: " + action);
+                this.setVisible(true); // Show main frame again if action failed
         }
     }
 
     public static void main(String[] args) {
-        new MainHomePage("Admin", "N/A"); // For testing; real login passes actual userType/meter
+        // Test with a sample Admin login
+        new MainHomePage("Admin", "N/A"); 
     }
 }
